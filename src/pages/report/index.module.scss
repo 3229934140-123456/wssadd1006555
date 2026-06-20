@@ -24,6 +24,17 @@
   margin-bottom: $spacing-lg;
 }
 
+.pendingNotice {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
+  border-radius: $radius-md;
+  padding: $spacing-md $spacing-lg;
+  margin-bottom: $spacing-lg;
+  box-shadow: 0 4rpx 12rpx rgba(255, 107, 107, 0.3);
+}
+
 .tipsTitle {
   font-size: $font-size-md;
   font-weight: $font-weight-semibold;

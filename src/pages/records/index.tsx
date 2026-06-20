@@ -3,17 +3,24 @@ import { View, Text, Button, ScrollView } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import RecordCard from '@/components/RecordCard';
 import styles from './index.module.scss';
-import { mockRecords, mockCheckIns, mockCurrentStatus } from '@/data/mock';
+import { useAppStore } from '@/store';
 import { formatDate, getDaysUntil } from '@/utils';
-import type { AlignerRecord } from '@/types';
 
 type FilterType = 'all' | 'confirmed' | 'pending';
 
 const RecordsPage: React.FC = () => {
-  const [records, setRecords] = useState<AlignerRecord[]>(mockRecords);
+  const {
+    currentStatus,
+    records,
+    checkIns,
+    confirmRecord
+  } = useAppStore();
+
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
-  const daysUntilPickup = getDaysUntil(mockCurrentStatus.nextPickupDate);
+  const daysUntilPickup = currentStatus
+    ? getDaysUntil(currentStatus.nextPickupDate)
+    : 0;
 
   const filteredRecords = useMemo(() => {
     if (activeFilter === 'all') return records;
@@ -30,15 +37,13 @@ const RecordsPage: React.FC = () => {
   }, [records]);
 
   const handleConfirmRecord = useCallback((id: string) => {
-    setRecords(prev =>
-      prev.map(r => (r.id === id ? { ...r, confirmed: true } : r))
-    );
+    confirmRecord(id);
     Taro.showToast({
       title: '确认成功！',
       icon: 'success'
     });
     console.log('[RecordsPage] 领取确认成功:', id);
-  }, []);
+  }, [confirmRecord]);
 
   const handleFilter = useCallback((filter: FilterType) => {
     setActiveFilter(filter);
@@ -68,6 +73,17 @@ const RecordsPage: React.FC = () => {
     return dayMap[date.getDay()];
   };
 
+  const recentCheckIns = useMemo(() => {
+    return checkIns.slice(0, 7);
+  }, [checkIns]);
+
+  if (!currentStatus) {
+    return null;
+  }
+
+  const isOverdue = daysUntilPickup < 0;
+  const showNextPickup = daysUntilPickup <= 30;
+
   return (
     <ScrollView className={styles.container} scrollY>
       <View className={styles.summaryCard}>
@@ -82,20 +98,38 @@ const RecordsPage: React.FC = () => {
             <Text className={styles.statLabel}>领取批次</Text>
           </View>
           <View className={styles.statItem}>
-            <Text className={styles.statValue}>{mockCurrentStatus.currentAligner}</Text>
+            <Text className={styles.statValue}>{currentStatus.currentAligner}</Text>
             <Text className={styles.statLabel}>当前佩戴</Text>
           </View>
         </View>
       </View>
 
-      {daysUntilPickup > 0 && daysUntilPickup <= 30 && (
+      {isOverdue && (
+        <View className={styles.overdueCard}>
+          <View className={styles.overdueHeader}>
+            <Text className={styles.overdueTitle}>⚠️ 领取已逾期</Text>
+            <Text className={styles.overdueDays}>已逾期 {Math.abs(daysUntilPickup)} 天</Text>
+          </View>
+          <Text className={styles.overdueContent}>
+            {currentStatus.nextPickupAligners} 的领取时间是 {formatDate(currentStatus.nextPickupDate)}，
+            请尽快联系诊所安排领取，以免影响矫治进度！
+          </Text>
+          <Button className={styles.overdueBtn} onClick={handleAppointment}>
+            立即联系诊所
+          </Button>
+        </View>
+      )}
+
+      {showNextPickup && !isOverdue && (
         <View className={styles.nextPickupCard}>
           <View className={styles.nextPickupHeader}>
             <Text className={styles.nextPickupTitle}>⏰ 下次领取提醒</Text>
-            <Text className={styles.nextPickupDate}>{daysUntilPickup}天后</Text>
+            <Text className={styles.nextPickupDate}>
+              {daysUntilPickup === 0 ? '今天' : `${daysUntilPickup}天后`}
+            </Text>
           </View>
           <Text className={styles.nextPickupContent}>
-            {formatDate(mockCurrentStatus.nextPickupDate)} 可领取 {mockCurrentStatus.nextPickupAligners}，
+            {formatDate(currentStatus.nextPickupDate)} 可领取 {currentStatus.nextPickupAligners}，
             建议提前预约诊所，避免白跑一趟哦~
           </Text>
           <Button className={styles.nextPickupBtn} onClick={handleAppointment}>
@@ -108,11 +142,11 @@ const RecordsPage: React.FC = () => {
         <View className={styles.sectionTitle}>
           <Text>近7天打卡</Text>
           <Text style={{ fontSize: '24rpx', color: '#86909C', fontWeight: 'normal' }}>
-            {mockCheckIns.filter(c => c.isChecked).length}/7 天
+            {recentCheckIns.filter(c => c.isChecked).length}/7 天
           </Text>
         </View>
         <View className={styles.weekStats}>
-          {mockCheckIns.slice(0, 7).map((checkIn) => (
+          {recentCheckIns.map((checkIn) => (
             <View key={checkIn.id} className={styles.dayItem}>
               <Text className={styles.dayName}>{getDayName(checkIn.date)}</Text>
               <View
@@ -130,7 +164,7 @@ const RecordsPage: React.FC = () => {
         </View>
         <View className={styles.tipCard}>
           <Text className={styles.tipText}>
-            💚 绿色=正常打卡 &nbsp; 🧡 橙色=当天有上报问题
+            💚 绿色=正常打卡 &nbsp; 🧡 橙色=当天有异常记录
           </Text>
         </View>
       </View>

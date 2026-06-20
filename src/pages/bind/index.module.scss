@@ -1,0 +1,234 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, $color-primary 0%, $color-primary-light 40%, $color-bg-page 40%);
+  padding: 0;
+}
+
+.header {
+  padding: 120rpx $page-padding $spacing-xl;
+  text-align: center;
+  color: $color-text-white;
+}
+
+.logoArea {
+  width: 140rpx;
+  height: 140rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: $radius-round;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto $spacing-lg;
+  font-size: 80rpx;
+}
+
+.title {
+  font-size: 44rpx;
+  font-weight: $font-weight-bold;
+  margin-bottom: $spacing-sm;
+}
+
+.subtitle {
+  font-size: $font-size-md;
+  opacity: 0.9;
+}
+
+.main {
+  padding: 0 $page-padding;
+  margin-top: -$spacing-lg;
+}
+
+.card {
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+  box-shadow: $shadow-popup;
+}
+
+.tips {
+  text-align: center;
+  margin-bottom: $spacing-xl;
+}
+
+.tipsIcon {
+  font-size: 64rpx;
+  margin-bottom: $spacing-md;
+}
+
+.tipsText {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  line-height: 1.6;
+
+  span {
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin: $spacing-xl 0;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1rpx;
+    background: $color-border;
+  }
+}
+
+.dividerText {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.formGroup {
+  margin-bottom: $spacing-lg;
+}
+
+.formLabel {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.inputWrapper {
+  display: flex;
+  gap: $spacing-md;
+  align-items: center;
+}
+
+.input {
+  flex: 1;
+  height: $button-height-lg;
+  padding: 0 $spacing-lg;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  font-size: $font-size-lg;
+  color: $color-text-primary;
+  text-align: center;
+  letter-spacing: 8rpx;
+  box-sizing: border-box;
+}
+
+.scanBtn {
+  @include button-reset;
+  width: 120rpx;
+  height: $button-height-lg;
+  background: $color-tag-bg;
+  border-radius: $radius-md;
+  color: $color-primary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.submitBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-lg;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-button;
+  color: $color-text-white;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  margin-top: $spacing-lg;
+  transition: all $transition-base;
+
+  &.disabled {
+    background: $color-border;
+    color: $color-text-tertiary;
+  }
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.demoTip {
+  text-align: center;
+  margin-top: $spacing-lg;
+  padding: $spacing-md;
+  background: $color-tag-bg;
+  border-radius: $radius-md;
+}
+
+.demoText {
+  font-size: $font-size-sm;
+  color: $color-primary-dark;
+  line-height: 1.6;
+}
+
+.loadingMask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loadingContent {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-xl;
+  text-align: center;
+  min-width: 300rpx;
+}
+
+.loadingText {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  margin-top: $spacing-md;
+}
+
+.boundCard {
+  background: $color-tag-bg;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+}
+
+.boundInfo {
+  font-size: $font-size-sm;
+  color: $color-primary-dark;
+  line-height: 1.8;
+}
+
+.boundInfo strong {
+  color: $color-primary;
+}
+
+.unbindBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-md;
+  background: transparent;
+  border: 2rpx solid $color-error;
+  border-radius: $radius-button;
+  color: $color-error;
+  font-size: $font-size-md;
+  margin-top: $spacing-md;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.7;
+  }
+}

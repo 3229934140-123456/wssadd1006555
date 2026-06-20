@@ -121,6 +121,59 @@
   }
 }
 
+.overdueCard {
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+  box-shadow: 0 4rpx 20rpx rgba(255, 107, 107, 0.3);
+}
+
+.overdueHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.overdueTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-white;
+}
+
+.overdueDays {
+  font-size: $font-size-sm;
+  color: $color-text-white;
+  background: rgba(255, 255, 255, 0.2);
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-round;
+}
+
+.overdueContent {
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.6;
+}
+
+.overdueBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-md;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: $radius-button;
+  color: #FF6B6B;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  margin-top: $spacing-md;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
 .emptyState {
   text-align: center;
   padding: $spacing-xl * 2 0;

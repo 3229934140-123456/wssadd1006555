@@ -28,6 +28,7 @@ export interface DailyCheckIn {
   wornHours: number;
   isChecked: boolean;
   hasIssue: boolean;
+  issues?: AbnormalType[];
 }
 
 // 异常上报

@@ -2,16 +2,24 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, Button, Textarea, Input, ScrollView } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import styles from './index.module.scss';
-import { abnormalTypeList, mockReports, mockPatientCase } from '@/data/mock';
+import { useAppStore } from '@/store';
+import { abnormalTypeList } from '@/data/mock';
 import { formatDate, getAbnormalLabel, getStatusLabel, getStatusColor } from '@/utils';
 import type { AbnormalType, AbnormalReport } from '@/types';
 
 const ReportPage: React.FC = () => {
+  const {
+    patientCase,
+    reports,
+    addReport,
+    updateReportStatus
+  } = useAppStore();
+
   const [selectedType, setSelectedType] = useState<AbnormalType | null>(null);
   const [description, setDescription] = useState('');
-  const [contactName, setContactName] = useState(mockPatientCase.isTeenager ? '妈妈' : '');
+  const [contactName, setContactName] = useState(patientCase?.isTeenager ? '妈妈' : '');
   const [contactPhone, setContactPhone] = useState('');
-  const [reports, setReports] = useState<AbnormalReport[]>(mockReports);
+  const [showStaffView, setShowStaffView] = useState(false);
 
   const handleSelectType = useCallback((type: AbnormalType) => {
     setSelectedType(type);
@@ -52,16 +60,12 @@ const ReportPage: React.FC = () => {
       confirmColor: '#4CAF90',
       success: (res) => {
         if (res.confirm) {
-          const newReport: AbnormalReport = {
-            id: `R${Date.now()}`,
+          addReport({
             type: selectedType,
             description: description.trim(),
-            reportDate: new Date().toISOString().split('T')[0],
-            status: 'pending',
             contactName: contactName || undefined,
             contactPhone: contactPhone || undefined
-          };
-          setReports([newReport, ...reports]);
+          });
           setSelectedType(null);
           setDescription('');
           setContactPhone('');
@@ -70,11 +74,36 @@ const ReportPage: React.FC = () => {
             icon: 'success',
             duration: 2000
           });
-          console.log('[ReportPage] 异常上报成功:', newReport);
         }
       }
     });
-  }, [selectedType, description, contactName, contactPhone, reports]);
+  }, [selectedType, description, contactName, contactPhone, addReport]);
+
+  const handleUpdateStatus = useCallback((report: AbnormalReport) => {
+    const statusList = [
+      { value: 'pending', label: '待处理' },
+      { value: 'reviewed', label: '已查看' },
+      { value: 'resolved', label: '已解决' }
+    ];
+
+    Taro.showActionSheet({
+      itemList: statusList.map(s => `${s.label}${report.status === s.value ? '（当前）' : ''}`),
+      success: (res) => {
+        const newStatus = statusList[res.tapIndex].value as 'pending' | 'reviewed' | 'resolved';
+        updateReportStatus(report.id, newStatus);
+        Taro.showToast({
+          title: `状态已更新为：${statusList[res.tapIndex].label}`,
+          icon: 'success'
+        });
+      }
+    });
+  }, [updateReportStatus]);
+
+  const pendingCount = reports.filter(r => r.status === 'pending').length;
+
+  if (!patientCase) {
+    return null;
+  }
 
   return (
     <ScrollView className={styles.container} scrollY>
@@ -84,6 +113,17 @@ const ReportPage: React.FC = () => {
           {'\n'}遇到任何情况都可以告诉我们，诊所客服看到后会第一时间联系您。如果情况紧急，也可以直接拨打诊所电话哦~
         </Text>
       </View>
+
+      {pendingCount > 0 && (
+        <View className={styles.pendingNotice} onClick={() => setShowStaffView(!showStaffView)}>
+          <Text style={{ fontSize: '28rpx', color: '#fff' }}>
+            🔔 有 {pendingCount} 条待客服处理
+          </Text>
+          <Text style={{ fontSize: '24rpx', color: 'rgba(255,255,255,0.8)' }}>
+            （点击模拟客服查看）
+          </Text>
+        </View>
+      )}
 
       <View className={styles.section}>
         <Text className={styles.sectionTitle}>遇到了什么问题？</Text>
@@ -108,7 +148,7 @@ const ReportPage: React.FC = () => {
 
       <View className={styles.section}>
         <View className={styles.formCard}>
-          <Text className={styles.formLabel}>简单描述一下情况（选填有助于我们更快了解）</Text>
+          <Text className={styles.formLabel}>简单描述一下情况（有助于我们更快了解）</Text>
           <Textarea
             className={styles.textarea}
             placeholder="比如：吃饭时左下后牙有点痛，已经持续2天了..."
@@ -161,7 +201,11 @@ const ReportPage: React.FC = () => {
         ) : (
           <View className={styles.historyList}>
             {reports.map((report) => (
-              <View key={report.id} className={styles.historyItem}>
+              <View
+                key={report.id}
+                className={styles.historyItem}
+                onClick={() => showStaffView && handleUpdateStatus(report)}
+              >
                 <View className={styles.historyHeader}>
                   <Text className={styles.historyType}>{getAbnormalLabel(report.type)}</Text>
                   <Text
@@ -178,12 +222,42 @@ const ReportPage: React.FC = () => {
                 <Text className={styles.historyDate}>
                   {formatDate(report.reportDate)}
                   {report.contactName ? ` · ${report.contactName}` : ''}
+                  {showStaffView && report.contactPhone ? ` · ${report.contactPhone}` : ''}
                 </Text>
+                {showStaffView && (
+                  <View style={{ marginTop: '16rpx', paddingTop: '16rpx', borderTop: '1rpx solid #f0f0f0' }}>
+                    <Text style={{ fontSize: '24rpx', color: '#4CAF90' }}>
+                      👆 点击可更新处理状态
+                    </Text>
+                  </View>
+                )}
               </View>
             ))}
           </View>
         )}
       </View>
+
+      {showStaffView && (
+        <View style={{ position: 'fixed', bottom: '32rpx', right: '32rpx', zIndex: 100 }}>
+          <Button
+            style={{
+              width: '120rpx',
+              height: '120rpx',
+              borderRadius: '60rpx',
+              background: '#4CAF90',
+              color: '#fff',
+              fontSize: '24rpx',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4rpx 16rpx rgba(76,175,144,0.4)'
+            }}
+            onClick={() => setShowStaffView(false)}
+          >
+            退出客服视图
+          </Button>
+        </View>
+      )}
     </ScrollView>
   );
 };
