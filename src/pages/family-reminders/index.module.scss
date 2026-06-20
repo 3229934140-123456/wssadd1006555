@@ -205,6 +205,123 @@
   }
 }
 
+.timelineCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.timelineSubtitle {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  display: block;
+  margin-bottom: $spacing-md;
+}
+
+.timelineList {
+  display: flex;
+  flex-direction: column;
+}
+
+.timelineItem {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  padding-bottom: $spacing-md;
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.timelineDot {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: $spacing-md;
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.timelineIcon {
+  font-size: 28rpx;
+}
+
+.tlHigh {
+  background: linear-gradient(135deg, #FFD6D6 0%, #FFB8B8 100%);
+}
+
+.tlMedium {
+  background: linear-gradient(135deg, #FFE8CC 0%, #FFD6A5 100%);
+}
+
+.tlLow {
+  background: linear-gradient(135deg, #D6EAF8 0%, #B8D4E8 100%);
+}
+
+.timelineLine {
+  position: absolute;
+  left: 31rpx;
+  top: 72rpx;
+  width: 2rpx;
+  bottom: 0;
+  background: linear-gradient(180deg, #E0E0E0 0%, #F0F0F0 100%);
+  z-index: 1;
+}
+
+.timelineContent {
+  flex: 1;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.99);
+  }
+}
+
+.timelineTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6rpx;
+}
+
+.timelineTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.timelineArrow {
+  font-size: $font-size-xl;
+  color: $color-text-tertiary;
+  font-weight: 300;
+}
+
+.timelineDate {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.issueBox {
+  background: #FFF9F5;
+  border-radius: $radius-sm;
+  padding: $spacing-sm $spacing-md;
+  margin-bottom: $spacing-sm;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
 .title {
   font-size: $font-size-xxl;
   font-weight: $font-weight-bold;

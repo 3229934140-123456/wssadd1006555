@@ -3,8 +3,19 @@ import { View, Text, Button, ScrollView } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import styles from './index.module.scss';
 import { useAppStore } from '@/store';
-import { formatDate, getDaysUntil } from '@/utils';
-import type { ScheduleReminder } from '@/types';
+import { formatDate, getDaysUntil, getAbnormalLabel } from '@/utils';
+import type { ScheduleReminder, AlignerRecord } from '@/types';
+
+interface TimelineItem {
+  id: string;
+  type: 'change' | 'pickup' | 'visit';
+  date: string;
+  title: string;
+  subtitle: string;
+  icon: string;
+  priority: 'high' | 'medium' | 'low';
+  relatedRecord?: AlignerRecord;
+}
 
 const FamilyRemindersPage: React.FC = () => {
   const {
@@ -20,32 +31,90 @@ const FamilyRemindersPage: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<'all' | 'change' | 'pickup' | 'overdue'>('all');
   const [showVisitDetail, setShowVisitDetail] = useState(false);
+  const [activeTimeline, setActiveTimeline] = useState<TimelineItem | null>(null);
+  const [showTimelineDetail, setShowTimelineDetail] = useState(false);
 
   const familyReminders = useMemo(() => getFamilyReminders(), [getFamilyReminders]);
+
+  const timelineItems = useMemo<TimelineItem[]>(() => {
+    const items: TimelineItem[] = [];
+    if (!currentStatus || !patientCase) return items;
+
+    if (currentStatus.changeDate) {
+      const days = getDaysUntil(currentStatus.changeDate);
+      items.push({
+        id: 'tl-change',
+        type: 'change',
+        date: currentStatus.changeDate,
+        title: `更换第${currentStatus.currentAligner + 1}副牙套`,
+        subtitle: days > 0 ? `${days}天后换副` : days === 0 ? '今天要换副啦' : `换副已逾期${Math.abs(days)}天`,
+        icon: '🔄',
+        priority: days <= 1 ? 'high' : days <= 7 ? 'medium' : 'low'
+      });
+    }
+
+    records
+      .filter(r => !r.confirmed)
+      .sort((a, b) => a.startAligner - b.startAligner)
+      .forEach(r => {
+        const days = getDaysUntil(r.receiveDate);
+        items.push({
+          id: `tl-pickup-${r.id}`,
+          type: 'pickup',
+          date: r.receiveDate,
+          title: `领取第${r.startAligner}-${r.endAligner}副`,
+          subtitle: days > 0 ? `${days}天后领取` : days === 0 ? '今天可以领取啦' : `领取已逾期${Math.abs(days)}天`,
+          icon: '🎁',
+          priority: days <= 3 ? 'high' : days <= 14 ? 'medium' : 'low',
+          relatedRecord: r
+        });
+      });
+
+    if (currentStatus.needPhotoToday) {
+      items.push({
+        id: 'tl-visit-photo',
+        type: 'visit',
+        date: new Date().toISOString().slice(0, 10),
+        title: '复诊拍照上传',
+        subtitle: '今天需要拍口腔照片',
+        icon: '📷',
+        priority: 'high'
+      });
+    }
+
+    return items.sort((a, b) => {
+      const da = new Date(a.date);
+      const db = new Date(b.date);
+      return da.getTime() - db.getTime();
+    });
+  }, [currentStatus, records, patientCase]);
+
+  const pendingReports = useMemo(() =>
+    reports.filter(r => r.status === 'pending'),
+    [reports]
+  );
+
+  const recentWeekCheckIns = checkIns.slice(0, 7);
+  const checkedInDays = recentWeekCheckIns.filter(c => c.isChecked).length;
+  const hasIssueDays = recentWeekCheckIns.filter(c => c.hasIssue).length;
+  const unconfirmedRecords = records.filter(r => !r.confirmed);
+  const daysUntilChange = currentStatus ? getDaysUntil(currentStatus.changeDate) : 0;
 
   const changeReminders = useMemo(() =>
     familyReminders.filter(r => r.type === 'change' && r.title.includes('家长提醒')),
     [familyReminders]
   );
-
   const pickupReminders = useMemo(() =>
     familyReminders.filter(r => r.type === 'pickup' && r.title.includes('家长提醒')),
     [familyReminders]
   );
-
   const overdueReminders = useMemo(() =>
     familyReminders.filter(r => r.type === 'overdue'),
     [familyReminders]
   );
-
   const visitReminders = useMemo(() =>
     familyReminders.filter(r => r.type === 'visit'),
     [familyReminders]
-  );
-
-  const pendingReports = useMemo(() =>
-    reports.filter(r => r.status === 'pending').length,
-    [reports]
   );
 
   const displayedReminders = useMemo(() => {
@@ -57,32 +126,20 @@ const FamilyRemindersPage: React.FC = () => {
     }
   }, [activeTab, changeReminders, pickupReminders, overdueReminders, familyReminders]);
 
-  const handleMarkRead = useCallback((id: string) => {
-    markReminderRead(id);
-  }, [markReminderRead]);
+  const handleMarkRead = useCallback((id: string) => { markReminderRead(id); }, [markReminderRead]);
+  const handleGoHome = useCallback(() => { Taro.switchTab({ url: '/pages/home/index' }); }, []);
+  const handleGoRecords = useCallback(() => { Taro.switchTab({ url: '/pages/records/index' }); }, []);
+  const handleGoReport = useCallback(() => { Taro.switchTab({ url: '/pages/report/index' }); }, []);
 
-  const handleGoHome = useCallback(() => {
-    Taro.switchTab({ url: '/pages/home/index' });
-  }, []);
-
-  const handleGoRecords = useCallback(() => {
-    Taro.switchTab({ url: '/pages/records/index' });
-  }, []);
-
-  const handleGoReport = useCallback(() => {
-    Taro.switchTab({ url: '/pages/report/index' });
+  const handleOpenTimeline = useCallback((item: TimelineItem) => {
+    setActiveTimeline(item);
+    setShowTimelineDetail(true);
   }, []);
 
   const getTabLabel = (key: string): string => {
-    const map: Record<string, string> = {
-      all: '全部',
-      change: '换副提醒',
-      pickup: '复诊提醒',
-      overdue: '逾期提醒'
-    };
+    const map: Record<string, string> = { all: '全部', change: '换副提醒', pickup: '复诊提醒', overdue: '逾期提醒' };
     return map[key] || key;
   };
-
   const getTabCount = (key: string): number => {
     const map: Record<string, number> = {
       all: familyReminders.length,
@@ -92,25 +149,18 @@ const FamilyRemindersPage: React.FC = () => {
     };
     return map[key] || 0;
   };
-
   const getReminderIcon = (type: string): string => {
-    const map: Record<string, string> = {
-      change: '🔄',
-      pickup: '🏥',
-      overdue: '⚠️',
-      visit: '📷'
-    };
+    const map: Record<string, string> = { change: '🔄', pickup: '🏥', overdue: '⚠️', visit: '📷' };
     return map[type] || '🔔';
   };
-
   const getReminderTypeLabel = (type: string): string => {
-    const map: Record<string, string> = {
-      change: '换副提醒',
-      pickup: '领取提醒',
-      overdue: '逾期提醒',
-      visit: '拍照提醒'
-    };
+    const map: Record<string, string> = { change: '换副提醒', pickup: '领取提醒', overdue: '逾期提醒', visit: '拍照提醒' };
     return map[type] || '提醒';
+  };
+  const getPriorityClass = (p: string) => {
+    if (p === 'high') return styles.tlHigh;
+    if (p === 'medium') return styles.tlMedium;
+    return styles.tlLow;
   };
 
   if (!patientCase || !currentStatus) {
@@ -123,12 +173,6 @@ const FamilyRemindersPage: React.FC = () => {
     );
   }
 
-  const unconfirmedRecords = records.filter(r => !r.confirmed);
-  const daysUntilChange = getDaysUntil(currentStatus.changeDate);
-  const recentWeekCheckIns = checkIns.slice(0, 7);
-  const checkedInDays = recentWeekCheckIns.filter(c => c.isChecked).length;
-  const hasIssueDays = recentWeekCheckIns.filter(c => c.hasIssue).length;
-
   return (
     <ScrollView className={styles.container} scrollY>
       <View className={styles.header}>
@@ -138,9 +182,7 @@ const FamilyRemindersPage: React.FC = () => {
             {patientCase.familyContact} · 关注 {patientCase.patientName} 的矫治进度
           </Text>
         </View>
-        <Button className={styles.backHomeBtn} onClick={handleGoHome}>
-          返回首页
-        </Button>
+        <Button className={styles.backHomeBtn} onClick={handleGoHome}>返回首页</Button>
       </View>
 
       <View className={styles.summaryCard}>
@@ -161,8 +203,8 @@ const FamilyRemindersPage: React.FC = () => {
             <Text className={styles.summaryLabel}>待领取批次</Text>
           </View>
           <View className={styles.summaryItem}>
-            <Text className={styles.summaryValue} style={{ color: pendingReports > 0 ? '#FF4D4F' : '#00B894' }}>
-              {pendingReports}
+            <Text className={styles.summaryValue} style={{ color: pendingReports.length > 0 ? '#FF4D4F' : '#00B894' }}>
+              {pendingReports.length}
             </Text>
             <Text className={styles.summaryLabel}>待处理问题</Text>
           </View>
@@ -187,6 +229,32 @@ const FamilyRemindersPage: React.FC = () => {
         </View>
       </View>
 
+      <View className={styles.timelineCard}>
+        <Text className={styles.sectionTitle}>🗓️ 陪同事项时间线</Text>
+        <Text className={styles.timelineSubtitle}>按日期排列，点击查看准备清单</Text>
+        <View className={styles.timelineList}>
+          {timelineItems.length === 0 ? (
+            <View style={{ textAlign: 'center', padding: '48rpx 0', color: '#A0A0A0' }}>暂无事项安排</View>
+          ) : (
+            timelineItems.map((item, idx) => (
+              <View key={item.id} className={styles.timelineItem} onClick={() => handleOpenTimeline(item)}>
+                <View className={`${styles.timelineDot} ${getPriorityClass(item.priority)}`}>
+                  <Text className={styles.timelineIcon}>{item.icon}</Text>
+                </View>
+                {idx < timelineItems.length - 1 && <View className={styles.timelineLine}></View>}
+                <View className={styles.timelineContent}>
+                  <View className={styles.timelineTop}>
+                    <Text className={styles.timelineTitle}>{item.title}</Text>
+                    <Text className={styles.timelineArrow}>›</Text>
+                  </View>
+                  <Text className={styles.timelineDate}>📅 {formatDate(item.date)} · {item.subtitle}</Text>
+                </View>
+              </View>
+            ))
+          )}
+        </View>
+      </View>
+
       {visitReminders.length > 0 && (
         <View className={styles.visitCard} onClick={() => setShowVisitDetail(true)}>
           <View className={styles.visitHeader}>
@@ -196,9 +264,7 @@ const FamilyRemindersPage: React.FC = () => {
             </View>
             <Text className={styles.visitArrow}>›</Text>
           </View>
-          <Text className={styles.visitContent}>
-            今天需要帮孩子拍摄口腔照片，{visitReminders.length}项待准备
-          </Text>
+          <Text className={styles.visitContent}>今天需要帮孩子拍摄口腔照片，{visitReminders.length}项待准备</Text>
         </View>
       )}
 
@@ -211,9 +277,7 @@ const FamilyRemindersPage: React.FC = () => {
             </View>
             <Text className={styles.visitArrow}>›</Text>
           </View>
-          <Text className={styles.visitContent}>
-            复诊前需要确认的事项清单，点击查看详情
-          </Text>
+          <Text className={styles.visitContent}>复诊前需要确认的事项清单，点击查看详情</Text>
         </View>
       )}
 
@@ -232,7 +296,6 @@ const FamilyRemindersPage: React.FC = () => {
               <Button className={styles.todoAction} onClick={handleGoHome}>查看详情</Button>
             </View>
           )}
-
           {currentStatus.needPhotoToday && (
             <View className={styles.todoItem}>
               <View className={styles.todoDot} style={{ background: '#54A0FF' }}></View>
@@ -243,34 +306,27 @@ const FamilyRemindersPage: React.FC = () => {
               <Button className={styles.todoAction} onClick={() => setShowVisitDetail(true)}>拍照指南</Button>
             </View>
           )}
-
           {unconfirmedRecords.length > 0 && (
             <View className={styles.todoItem}>
               <View className={styles.todoDot} style={{ background: '#FF9F43' }}></View>
               <View className={styles.todoContent}>
-                <Text className={styles.todoText}>
-                  有{unconfirmedRecords.length}批牙套待领取
-                </Text>
+                <Text className={styles.todoText}>有{unconfirmedRecords.length}批牙套待领取</Text>
                 <Text className={styles.todoDate}>请及时安排时间到诊所</Text>
               </View>
               <Button className={styles.todoAction} onClick={handleGoRecords}>查看记录</Button>
             </View>
           )}
-
-          {pendingReports > 0 && (
+          {pendingReports.length > 0 && (
             <View className={styles.todoItem}>
               <View className={styles.todoDot} style={{ background: '#FF4D4F' }}></View>
               <View className={styles.todoContent}>
-                <Text className={styles.todoText}>
-                  有{pendingReports}个异常问题等待诊所处理
-                </Text>
+                <Text className={styles.todoText}>有{pendingReports.length}个异常问题等待诊所处理</Text>
                 <Text className={styles.todoDate}>可联系诊所跟进进度</Text>
               </View>
               <Button className={styles.todoAction} onClick={handleGoReport}>查看上报</Button>
             </View>
           )}
-
-          {daysUntilChange > 1 && !currentStatus.needPhotoToday && unconfirmedRecords.length === 0 && pendingReports === 0 && (
+          {daysUntilChange > 1 && !currentStatus.needPhotoToday && unconfirmedRecords.length === 0 && pendingReports.length === 0 && (
             <View className={styles.todoItem}>
               <View className={styles.todoDot} style={{ background: '#00B894' }}></View>
               <View className={styles.todoContent}>
@@ -285,7 +341,6 @@ const FamilyRemindersPage: React.FC = () => {
       <View className={styles.section}>
         <Text className={styles.sectionTitle}>🔔 提醒记录</Text>
       </View>
-
       <View className={styles.tabBar}>
         {(['all', 'change', 'pickup', 'overdue'] as const).map((key) => (
           <Button
@@ -355,65 +410,141 @@ const FamilyRemindersPage: React.FC = () => {
             <View className={styles.detailSection}>
               <Text className={styles.detailSectionTitle}>📷 拍照要求（如有需要）</Text>
               <View className={styles.detailList}>
-                <View className={styles.detailItem}>
-                  <Text className={styles.detailDot}>•</Text>
-                  <Text className={styles.detailText}>在光线充足的地方拍摄，避免反光</Text>
-                </View>
-                <View className={styles.detailItem}>
-                  <Text className={styles.detailDot}>•</Text>
-                  <Text className={styles.detailText}>拍摄牙齿正面（上下牙咬合状态）</Text>
-                </View>
-                <View className={styles.detailItem}>
-                  <Text className={styles.detailDot}>•</Text>
-                  <Text className={styles.detailText}>拍摄牙齿左右侧面各一张</Text>
-                </View>
-                <View className={styles.detailItem}>
-                  <Text className={styles.detailDot}>•</Text>
-                  <Text className={styles.detailText}>拍摄牙齿上下面（咬合面）各一张</Text>
-                </View>
+                <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>在光线充足的地方拍摄，避免反光</Text></View>
+                <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>拍摄牙齿正面（上下牙咬合状态）</Text></View>
+                <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>拍摄牙齿左右侧面各一张</Text></View>
+                <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>拍摄牙齿上下面（咬合面）各一张</Text></View>
               </View>
             </View>
 
             <View className={styles.detailSection}>
               <Text className={styles.detailSectionTitle}>📋 复诊前准备</Text>
               <View className={styles.detailList}>
-                <View className={styles.detailItem}>
-                  <Text className={styles.detailDot}>•</Text>
-                  <Text className={styles.detailText}>确认最近7天打卡情况（{checkedInDays}/7天）</Text>
-                </View>
-                <View className={styles.detailItem}>
-                  <Text className={styles.detailDot}>•</Text>
-                  <Text className={styles.detailText}>检查孩子是否有异常疼痛或不适</Text>
-                </View>
-                <View className={styles.detailItem}>
-                  <Text className={styles.detailDot}>•</Text>
-                  <Text className={styles.detailText}>带上换下来的旧牙套（如有）</Text>
-                </View>
-                <View className={styles.detailItem}>
-                  <Text className={styles.detailDot}>•</Text>
-                  <Text className={styles.detailText}>提前预约诊所，安排好陪同时间</Text>
-                </View>
+                <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>确认最近7天打卡情况（{checkedInDays}/7天）</Text></View>
+                <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>检查孩子是否有异常疼痛或不适</Text></View>
+                <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>带上换下来的旧牙套（如有）</Text></View>
+                <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>提前预约诊所，安排好陪同时间</Text></View>
               </View>
             </View>
 
-            {pendingReports > 0 && (
+            {pendingReports.length > 0 && (
               <View className={styles.detailSection}>
                 <Text className={styles.detailSectionTitle}>⚠️ 待处理问题</Text>
                 <View className={styles.detailList}>
-                  <View className={styles.detailItem}>
-                    <Text className={styles.detailDot}>•</Text>
-                    <Text className={styles.detailText}>
-                      有{pendingReports}个异常问题待诊所处理，复诊时可当面咨询
-                    </Text>
-                  </View>
+                  {pendingReports.map((r) => (
+                    <View key={r.id} className={styles.detailItem}>
+                      <Text className={styles.detailDot}>•</Text>
+                      <Text className={styles.detailText}>
+                        [{getAbnormalLabel(r.type)}] {r.description}
+                      </Text>
+                    </View>
+                  ))}
                 </View>
               </View>
             )}
 
             <View className={styles.modalActions}>
-              <Button className={styles.modalCancelBtn} onClick={() => setShowVisitDetail(false)}>
-                我知道了
-              </Button>
+              <Button className={styles.modalCancelBtn} onClick={() => setShowVisitDetail(false)}>我知道了</Button>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {showTimelineDetail && activeTimeline && (
+        <View className={styles.modalMask} onClick={() => { setShowTimelineDetail(false); setActiveTimeline(null); }}>
+          <View className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <Text className={styles.modalTitle}>
+              {activeTimeline.icon} {activeTimeline.title}
+            </Text>
+            <Text className={styles.modalSubtitle}>
+              📅 {formatDate(activeTimeline.date)} · {activeTimeline.subtitle}
+            </Text>
+
+            {activeTimeline.type === 'change' && (
+              <>
+                <View className={styles.detailSection}>
+                  <Text className={styles.detailSectionTitle}>🔄 换副准备清单</Text>
+                  <View className={styles.detailList}>
+                    <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>确认当前牙套已佩戴满14天</Text></View>
+                    <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>找到新牙套（第{currentStatus.currentAligner + 1}副），核对编号</Text></View>
+                    <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>清洗双手，确保指甲干净</Text></View>
+                    <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>取下旧牙套，保存好（复诊带给医生）</Text></View>
+                    <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>戴上新牙套，确认完全贴合</Text></View>
+                    <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>清洁旧牙套放入牙套盒保存</Text></View>
+                  </View>
+                </View>
+                <View className={styles.detailSection}>
+                  <Text className={styles.detailSectionTitle}>💬 给家长的话</Text>
+                  <Text style={{ fontSize: '26rpx', color: '#666', lineHeight: 1.6 }}>
+                    换副初期孩子可能会有轻微酸胀感，通常2-3天会缓解。
+                    请提醒孩子每天佩戴不少于22小时，进食时记得摘下并清洁牙套。
+                  </Text>
+                </View>
+              </>
+            )}
+
+            {activeTimeline.type === 'pickup' && activeTimeline.relatedRecord && (
+              <>
+                <View className={styles.detailSection}>
+                  <Text className={styles.detailSectionTitle}>🎁 领取准备清单</Text>
+                  <View className={styles.detailList}>
+                    <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>提前和诊所预约领取时间</Text></View>
+                    <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>带上换下来的旧牙套（给医生检查）</Text></View>
+                    <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>确认孩子最近佩戴情况，有问题可当面咨询</Text></View>
+                    <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>领取新牙套时核对副号范围（第{activeTimeline.relatedRecord.startAligner}-{activeTimeline.relatedRecord.endAligner}副）</Text></View>
+                    {activeTimeline.relatedRecord.notes && (
+                      <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>诊所提示：{activeTimeline.relatedRecord.notes}</Text></View>
+                    )}
+                    {activeTimeline.relatedRecord.nurseName && (
+                      <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>负责护士：{activeTimeline.relatedRecord.nurseName}</Text></View>
+                    )}
+                  </View>
+                </View>
+              </>
+            )}
+
+            {activeTimeline.type === 'visit' && (
+              <>
+                <View className={styles.detailSection}>
+                  <Text className={styles.detailSectionTitle}>📷 拍照准备清单</Text>
+                  <View className={styles.detailList}>
+                    <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>找一处光线充足的地方（窗边自然光最好）</Text></View>
+                    <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>让孩子张大嘴，拍摄牙齿正面咬合状态</Text></View>
+                    <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>拍摄左右侧面各一张（可以用勺子轻轻拉开嘴唇）</Text></View>
+                    <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>拍摄上下牙齿咬合面各一张</Text></View>
+                    <View className={styles.detailItem}><Text className={styles.detailDot}>•</Text><Text className={styles.detailText}>检查照片清晰度，确保牙齿细节可见</Text></View>
+                  </View>
+                </View>
+              </>
+            )}
+
+            <View className={styles.detailSection}>
+              <Text className={styles.detailSectionTitle}>⚠️ 关联异常记录（{pendingReports.length}条待处理）</Text>
+              {pendingReports.length === 0 ? (
+                <Text style={{ fontSize: '26rpx', color: '#A0A0A0' }}>暂无未处理的异常问题</Text>
+              ) : (
+                <View className={styles.detailList}>
+                  {pendingReports.map((r) => (
+                    <View key={r.id} className={styles.issueBox}>
+                      <Text style={{ fontSize: '26rpx', fontWeight: 600, color: '#333' }}>
+                        {getAbnormalLabel(r.type)} · {formatDate(r.reportDate)}
+                      </Text>
+                      <Text style={{ fontSize: '24rpx', color: '#666', marginTop: '8rpx', lineHeight: 1.6 }}>
+                        {r.description}
+                      </Text>
+                      {(r.contactName || r.contactPhone) && (
+                        <Text style={{ fontSize: '22rpx', color: '#86909C', marginTop: '6rpx' }}>
+                          📞 {r.contactName || ''} {r.contactPhone || ''}
+                        </Text>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            <View className={styles.modalActions}>
+              <Button className={styles.modalCancelBtn} onClick={() => { setShowTimelineDetail(false); setActiveTimeline(null); }}>我知道了</Button>
             </View>
           </View>
         </View>

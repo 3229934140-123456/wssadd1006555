@@ -49,13 +49,16 @@ const BindPage: React.FC = () => {
         Taro.showToast({
           title: '绑定成功！',
           icon: 'success',
-          duration: 1500
+          duration: 1200
         });
         setTimeout(() => {
           Taro.switchTab({
-            url: '/pages/home/index'
+            url: '/pages/home/index',
+            fail: () => {
+              Taro.redirectTo({ url: '/pages/home/index' });
+            }
           });
-        }, 1500);
+        }, 1200);
       } else {
         Taro.showToast({
           title: '绑定码无效，请检查后重试',

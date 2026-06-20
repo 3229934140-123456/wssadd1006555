@@ -42,8 +42,12 @@ interface AppState {
 
   confirmRecord: (recordId: string) => void;
   addRecord: (record: Omit<AlignerRecord, 'id' | 'confirmed'>) => void;
+  updateRecord: (recordId: string, updates: Partial<AlignerRecord>) => void;
+  deleteRecord: (recordId: string) => void;
   getNextPickupStatus: () => PickupStatus;
   refreshCurrentStatus: () => void;
+  getWeekCheckIns: () => DailyCheckIn[];
+  getPendingRecords: () => AlignerRecord[];
 
   generateReminders: () => void;
   markReminderRead: (id: string) => void;
@@ -370,6 +374,70 @@ export const useAppStore = create<AppState>()(
           };
         });
         get().generateReminders();
+      },
+
+      updateRecord: (recordId, updates) => {
+        set(state => {
+          const updatedRecords = state.records.map(r =>
+            r.id === recordId ? { ...r, ...updates } : r
+          ).sort((a, b) => a.startAligner - b.startAligner);
+
+          let newStatus = state.currentStatus;
+          if (state.currentStatus) {
+            const unconfirmed = updatedRecords.filter(r => !r.confirmed).sort((a, b) => a.startAligner - b.startAligner);
+            const next = unconfirmed[0];
+
+            newStatus = {
+              ...state.currentStatus,
+              nextPickupDate: next ? next.receiveDate : '',
+              nextPickupAligners: next ? `第${next.startAligner}-${next.endAligner}副` : ''
+            };
+          }
+
+          console.log('[Store] 更新领取批次:', recordId, updates);
+          return {
+            records: updatedRecords,
+            currentStatus: newStatus
+          };
+        });
+        get().generateReminders();
+      },
+
+      deleteRecord: (recordId) => {
+        set(state => {
+          const targetRecord = state.records.find(r => r.id === recordId);
+          if (targetRecord?.confirmed) {
+            console.log('[Store] 已确认的批次不允许删除');
+            return {};
+          }
+          const updatedRecords = state.records.filter(r => r.id !== recordId);
+          let newStatus = state.currentStatus;
+          if (state.currentStatus) {
+            const unconfirmed = updatedRecords.filter(r => !r.confirmed).sort((a, b) => a.startAligner - b.startAligner);
+            const next = unconfirmed[0];
+            newStatus = {
+              ...state.currentStatus,
+              nextPickupDate: next ? next.receiveDate : '',
+              nextPickupAligners: next ? `第${next.startAligner}-${next.endAligner}副` : ''
+            };
+          }
+          console.log('[Store] 删除领取批次:', recordId);
+          return {
+            records: updatedRecords,
+            currentStatus: newStatus
+          };
+        });
+        get().generateReminders();
+      },
+
+      getWeekCheckIns: () => {
+        return get().checkIns.slice(0, 7);
+      },
+
+      getPendingRecords: () => {
+        return get().records
+          .filter(r => !r.confirmed)
+          .sort((a, b) => a.startAligner - b.startAligner);
       },
 
       getNextPickupStatus: () => {
