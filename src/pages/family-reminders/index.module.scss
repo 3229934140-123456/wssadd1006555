@@ -8,10 +8,201 @@
 
 .header {
   margin-bottom: $spacing-lg;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
 }
 
 .headerInfo {
   flex: 1;
+}
+
+.backHomeBtn {
+  @include button-reset;
+  padding: $spacing-sm $spacing-md;
+  background: rgba(255, 255, 255, 0.9);
+  color: #6366F1;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  border-radius: $radius-round;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.96);
+  }
+}
+
+.weekCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.weekStats {
+  display: flex;
+  justify-content: space-around;
+  margin-top: $spacing-md;
+}
+
+.weekStat {
+  text-align: center;
+  flex: 1;
+}
+
+.weekValue {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.weekLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.visitCard {
+  background: linear-gradient(135deg, #54A0FF 0%, #7FB8FF 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+  box-shadow: 0 4rpx 20rpx rgba(84, 160, 255, 0.3);
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.99);
+    opacity: 0.95;
+  }
+}
+
+.visitHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.visitTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-white;
+}
+
+.visitArrow {
+  font-size: $font-size-xl;
+  color: $color-text-white;
+  opacity: 0.8;
+}
+
+.visitContent {
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.5;
+}
+
+.modalMask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: $page-padding;
+}
+
+.modalContent {
+  width: 100%;
+  max-width: 650rpx;
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.modalTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  text-align: center;
+  margin-bottom: $spacing-xs;
+}
+
+.modalSubtitle {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  text-align: center;
+  margin-bottom: $spacing-lg;
+}
+
+.detailSection {
+  margin-bottom: $spacing-lg;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.detailSectionTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.detailList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.detailItem {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-sm;
+}
+
+.detailDot {
+  color: #6366F1;
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  line-height: 1.5;
+}
+
+.detailText {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: 1.6;
+}
+
+.modalActions {
+  margin-top: $spacing-lg;
+}
+
+.modalCancelBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-lg;
+  background: linear-gradient(135deg, #6366F1 0%, #818CF8 100%);
+  border-radius: $radius-button;
+  color: $color-text-white;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
 }
 
 .title {

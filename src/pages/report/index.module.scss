@@ -262,3 +262,24 @@
     transform: scale(0.98);
   }
 }
+
+.handlerNote {
+  background: linear-gradient(135deg, #E8F8F2 0%, #D0F0E3 100%);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-top: $spacing-sm;
+}
+
+.handlerLabel {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.handlerContent {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  line-height: 1.6;
+}

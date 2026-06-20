@@ -34,9 +34,14 @@ interface AppState {
   getCheckInById: (id: string) => DailyCheckIn | undefined;
 
   addReport: (report: Omit<AbnormalReport, 'id' | 'reportDate' | 'status'>) => void;
-  updateReportStatus: (id: string, status: 'pending' | 'reviewed' | 'resolved') => void;
+  updateReportStatus: (
+    id: string,
+    status: 'pending' | 'reviewed' | 'resolved',
+    handlerNote?: string
+  ) => void;
 
   confirmRecord: (recordId: string) => void;
+  addRecord: (record: Omit<AlignerRecord, 'id' | 'confirmed'>) => void;
   getNextPickupStatus: () => PickupStatus;
   refreshCurrentStatus: () => void;
 
@@ -177,7 +182,10 @@ export const useAppStore = create<AppState>()(
             reportDate: '2024-06-17',
             status: 'resolved',
             contactName: '王妈妈',
-            contactPhone: '138****8888'
+            contactPhone: '138****8888',
+            handlerNote: '已安排复诊检查，确认是附件边缘轻微刺激，已做抛光处理，继续观察。',
+            handlerName: '李医生',
+            handledDate: '2024-06-18'
           }
         ];
 
@@ -221,7 +229,8 @@ export const useAppStore = create<AppState>()(
           wornHours: checkIn.wornHours,
           isChecked: true,
           hasIssue: (checkIn.issues && checkIn.issues.length > 0) || false,
-          issues: checkIn.issues
+          issues: checkIn.issues,
+          note: checkIn.note
         };
 
         set(state => ({
@@ -256,7 +265,10 @@ export const useAppStore = create<AppState>()(
       addReport: (report) => {
         const newReport: AbnormalReport = {
           id: `R${Date.now()}`,
-          ...report,
+          type: report.type,
+          description: report.description,
+          contactName: report.contactName,
+          contactPhone: report.contactPhone,
           reportDate: getTodayStr(),
           status: 'pending'
         };
@@ -267,11 +279,20 @@ export const useAppStore = create<AppState>()(
         console.log('[Store] 新增异常上报:', newReport);
       },
 
-      updateReportStatus: (id, status) => {
+      updateReportStatus: (id, status, handlerNote) => {
         set(state => ({
-          reports: state.reports.map(r => r.id === id ? { ...r, status } : r)
+          reports: state.reports.map(r => {
+            if (r.id !== id) return r;
+            return {
+              ...r,
+              status,
+              handlerNote: handlerNote || r.handlerNote,
+              handlerName: handlerNote ? '李医生' : r.handlerName,
+              handledDate: handlerNote ? getTodayStr() : r.handledDate
+            };
+          })
         }));
-        console.log('[Store] 更新上报状态:', id, status);
+        console.log('[Store] 更新上报状态:', id, status, handlerNote ? '带备注' : '');
       },
 
       confirmRecord: (recordId) => {
@@ -313,6 +334,39 @@ export const useAppStore = create<AppState>()(
             records: updatedRecords,
             currentStatus: newStatus,
             progress: newProgress
+          };
+        });
+        get().generateReminders();
+      },
+
+      addRecord: (record) => {
+        const newRecord: AlignerRecord = {
+          id: `REC${Date.now()}`,
+          ...record,
+          confirmed: false
+        };
+
+        set(state => {
+          const updatedRecords = [...state.records, newRecord].sort((a, b) => a.startAligner - b.startAligner);
+          let newStatus = state.currentStatus;
+
+          if (state.currentStatus) {
+            const unconfirmed = updatedRecords.filter(r => !r.confirmed).sort((a, b) => a.startAligner - b.startAligner);
+            const next = unconfirmed[0];
+
+            if (!state.currentStatus.nextPickupDate && next) {
+              newStatus = {
+                ...state.currentStatus,
+                nextPickupDate: next.receiveDate,
+                nextPickupAligners: `第${next.startAligner}-${next.endAligner}副`
+              };
+            }
+          }
+
+          console.log('[Store] 诊所新增领取批次:', newRecord);
+          return {
+            records: updatedRecords,
+            currentStatus: newStatus
           };
         });
         get().generateReminders();
@@ -387,6 +441,17 @@ export const useAppStore = create<AppState>()(
             isRead: false,
             priority: 'high'
           });
+          if (patientCase.isTeenager) {
+            newReminders.push({
+              id: `REM_FAMILY_PHOTO_${todayStr}`,
+              type: 'visit',
+              title: '👨‍👩‍👧 家长提醒：复诊拍照',
+              content: '今天需要帮孩子拍摄口腔照片，记得在光线好的地方拍摄牙齿正面、侧面各一张，方便医生检查矫治进度。',
+              date: todayStr,
+              isRead: false,
+              priority: 'high'
+            });
+          }
         }
 
         const unconfirmedRecords = records.filter(r => !r.confirmed);
@@ -412,7 +477,7 @@ export const useAppStore = create<AppState>()(
               id: `REM_FAMILY_PICKUP_${record.id}`,
               type: 'pickup',
               title: '👨‍👩‍👧 家长提醒：复诊前3天',
-              content: `孩子将在3天后（${record.receiveDate}）到诊所领取第${record.startAligner}-${record.endAligner}副，记得提前安排时间陪同就诊~`,
+              content: `孩子将在3天后（${record.receiveDate}）到诊所领取第${record.startAligner}-${record.endAligner}副，记得提前安排时间陪同就诊。就诊前请确认孩子最近一周的佩戴情况、是否有异常疼痛、牙套清洁是否到位。`,
               date: todayStr,
               isRead: false,
               priority: 'high'
@@ -437,7 +502,7 @@ export const useAppStore = create<AppState>()(
             id: `REM_FAMILY_CHANGE_${todayStr}`,
             type: 'change',
             title: '👨‍👩‍👧 家长提醒：换副前1天',
-            content: `孩子明天（${currentStatus.changeDate}）需要更换第${currentStatus.currentAligner + 1}副牙套，请提醒孩子按顺序更换，不要跳副哦~`,
+            content: `孩子明天（${currentStatus.changeDate}）需要更换第${currentStatus.currentAligner + 1}副牙套，请提醒孩子按顺序更换，不要跳副哦~换下来的旧牙套记得保存好，复诊时带给医生检查。`,
             date: todayStr,
             isRead: false,
             priority: 'high'
@@ -462,7 +527,7 @@ export const useAppStore = create<AppState>()(
       },
 
       getFamilyReminders: () => {
-        return get().reminders.filter(r => r.title.includes('家长提醒') || r.type === 'overdue');
+        return get().reminders.filter(r => r.title.includes('家长提醒') || r.type === 'overdue' || r.type === 'visit');
       },
 
       getPendingIssuesSummary: () => {

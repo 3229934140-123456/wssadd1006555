@@ -219,10 +219,26 @@ const ReportPage: React.FC = () => {
                   </Text>
                 </View>
                 <Text className={styles.historyDesc}>{report.description}</Text>
-                <Text className={styles.historyDate}>
-                  {formatDate(report.reportDate)}
-                  {report.contactName ? ` · ${report.contactName}` : ''}
-                </Text>
+                {(report.contactName || report.contactPhone) && (
+                  <Text className={styles.historyDate}>
+                    {formatDate(report.reportDate)}
+                    {report.contactName ? ` · ${report.contactName}` : ''}
+                    {report.contactPhone ? ` · ${report.contactPhone}` : ''}
+                  </Text>
+                )}
+                {!report.contactName && !report.contactPhone && (
+                  <Text className={styles.historyDate}>
+                    {formatDate(report.reportDate)}
+                  </Text>
+                )}
+                {report.handlerNote && (
+                  <View className={styles.handlerNote}>
+                    <Text className={styles.handlerLabel}>
+                      💬 {report.handlerName || '诊所客服'} · {report.handledDate ? formatDate(report.handledDate) : ''}
+                    </Text>
+                    <Text className={styles.handlerContent}>{report.handlerNote}</Text>
+                  </View>
+                )}
               </View>
             ))}
           </View>

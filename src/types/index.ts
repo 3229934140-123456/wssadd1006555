@@ -51,6 +51,9 @@ export interface AbnormalReport {
   status: 'pending' | 'reviewed' | 'resolved';
   contactName?: string;
   contactPhone?: string;
+  handlerNote?: string;
+  handlerName?: string;
+  handledDate?: string;
 }
 
 // 异常类型

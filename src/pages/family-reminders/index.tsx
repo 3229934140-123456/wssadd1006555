@@ -14,10 +14,12 @@ const FamilyRemindersPage: React.FC = () => {
     reminders,
     reports,
     markReminderRead,
-    getFamilyReminders
+    getFamilyReminders,
+    checkIns
   } = useAppStore();
 
   const [activeTab, setActiveTab] = useState<'all' | 'change' | 'pickup' | 'overdue'>('all');
+  const [showVisitDetail, setShowVisitDetail] = useState(false);
 
   const familyReminders = useMemo(() => getFamilyReminders(), [getFamilyReminders]);
 
@@ -33,6 +35,11 @@ const FamilyRemindersPage: React.FC = () => {
 
   const overdueReminders = useMemo(() =>
     familyReminders.filter(r => r.type === 'overdue'),
+    [familyReminders]
+  );
+
+  const visitReminders = useMemo(() =>
+    familyReminders.filter(r => r.type === 'visit'),
     [familyReminders]
   );
 
@@ -118,6 +125,9 @@ const FamilyRemindersPage: React.FC = () => {
 
   const unconfirmedRecords = records.filter(r => !r.confirmed);
   const daysUntilChange = getDaysUntil(currentStatus.changeDate);
+  const recentWeekCheckIns = checkIns.slice(0, 7);
+  const checkedInDays = recentWeekCheckIns.filter(c => c.isChecked).length;
+  const hasIssueDays = recentWeekCheckIns.filter(c => c.hasIssue).length;
 
   return (
     <ScrollView className={styles.container} scrollY>
@@ -128,6 +138,9 @@ const FamilyRemindersPage: React.FC = () => {
             {patientCase.familyContact} · 关注 {patientCase.patientName} 的矫治进度
           </Text>
         </View>
+        <Button className={styles.backHomeBtn} onClick={handleGoHome}>
+          返回首页
+        </Button>
       </View>
 
       <View className={styles.summaryCard}>
@@ -156,6 +169,54 @@ const FamilyRemindersPage: React.FC = () => {
         </View>
       </View>
 
+      <View className={styles.weekCard}>
+        <Text className={styles.sectionTitle}>📊 近7天佩戴情况</Text>
+        <View className={styles.weekStats}>
+          <View className={styles.weekStat}>
+            <Text className={styles.weekValue} style={{ color: '#4CAF90' }}>{checkedInDays}</Text>
+            <Text className={styles.weekLabel}>已打卡</Text>
+          </View>
+          <View className={styles.weekStat}>
+            <Text className={styles.weekValue} style={{ color: '#FF9F43' }}>{hasIssueDays}</Text>
+            <Text className={styles.weekLabel}>有异常</Text>
+          </View>
+          <View className={styles.weekStat}>
+            <Text className={styles.weekValue} style={{ color: '#86909C' }}>{7 - checkedInDays}</Text>
+            <Text className={styles.weekLabel}>未打卡</Text>
+          </View>
+        </View>
+      </View>
+
+      {visitReminders.length > 0 && (
+        <View className={styles.visitCard} onClick={() => setShowVisitDetail(true)}>
+          <View className={styles.visitHeader}>
+            <View style={{ display: 'flex', alignItems: 'center', gap: '12rpx' }}>
+              <Text style={{ fontSize: '32rpx' }}>📷</Text>
+              <Text className={styles.visitTitle}>复诊拍照陪同提醒</Text>
+            </View>
+            <Text className={styles.visitArrow}>›</Text>
+          </View>
+          <Text className={styles.visitContent}>
+            今天需要帮孩子拍摄口腔照片，{visitReminders.length}项待准备
+          </Text>
+        </View>
+      )}
+
+      {(pickupReminders.length > 0 || currentStatus.needPhotoToday || daysUntilChange <= 1) && (
+        <View className={styles.visitCard} onClick={() => setShowVisitDetail(true)}>
+          <View className={styles.visitHeader}>
+            <View style={{ display: 'flex', alignItems: 'center', gap: '12rpx' }}>
+              <Text style={{ fontSize: '32rpx' }}>🏥</Text>
+              <Text className={styles.visitTitle}>复诊陪同准备事项</Text>
+            </View>
+            <Text className={styles.visitArrow}>›</Text>
+          </View>
+          <Text className={styles.visitContent}>
+            复诊前需要确认的事项清单，点击查看详情
+          </Text>
+        </View>
+      )}
+
       <View className={styles.todoCard}>
         <Text className={styles.todoTitle}>📋 今日关注事项</Text>
         <View className={styles.todoList}>
@@ -179,7 +240,7 @@ const FamilyRemindersPage: React.FC = () => {
                 <Text className={styles.todoText}>今天需要拍口腔照片上传</Text>
                 <Text className={styles.todoDate}>帮助医生了解矫治进度</Text>
               </View>
-              <Button className={styles.todoAction} onClick={handleGoHome}>去拍照</Button>
+              <Button className={styles.todoAction} onClick={() => setShowVisitDetail(true)}>拍照指南</Button>
             </View>
           )}
 
@@ -282,6 +343,81 @@ const FamilyRemindersPage: React.FC = () => {
           </Text>
         </View>
       </View>
+
+      {showVisitDetail && (
+        <View className={styles.modalMask} onClick={() => setShowVisitDetail(false)}>
+          <View className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <Text className={styles.modalTitle}>🏥 复诊/拍照陪同指南</Text>
+            <Text className={styles.modalSubtitle}>
+              孩子当前佩戴第{currentStatus.currentAligner}副，共{currentStatus.totalAligners}副
+            </Text>
+
+            <View className={styles.detailSection}>
+              <Text className={styles.detailSectionTitle}>📷 拍照要求（如有需要）</Text>
+              <View className={styles.detailList}>
+                <View className={styles.detailItem}>
+                  <Text className={styles.detailDot}>•</Text>
+                  <Text className={styles.detailText}>在光线充足的地方拍摄，避免反光</Text>
+                </View>
+                <View className={styles.detailItem}>
+                  <Text className={styles.detailDot}>•</Text>
+                  <Text className={styles.detailText}>拍摄牙齿正面（上下牙咬合状态）</Text>
+                </View>
+                <View className={styles.detailItem}>
+                  <Text className={styles.detailDot}>•</Text>
+                  <Text className={styles.detailText}>拍摄牙齿左右侧面各一张</Text>
+                </View>
+                <View className={styles.detailItem}>
+                  <Text className={styles.detailDot}>•</Text>
+                  <Text className={styles.detailText}>拍摄牙齿上下面（咬合面）各一张</Text>
+                </View>
+              </View>
+            </View>
+
+            <View className={styles.detailSection}>
+              <Text className={styles.detailSectionTitle}>📋 复诊前准备</Text>
+              <View className={styles.detailList}>
+                <View className={styles.detailItem}>
+                  <Text className={styles.detailDot}>•</Text>
+                  <Text className={styles.detailText}>确认最近7天打卡情况（{checkedInDays}/7天）</Text>
+                </View>
+                <View className={styles.detailItem}>
+                  <Text className={styles.detailDot}>•</Text>
+                  <Text className={styles.detailText}>检查孩子是否有异常疼痛或不适</Text>
+                </View>
+                <View className={styles.detailItem}>
+                  <Text className={styles.detailDot}>•</Text>
+                  <Text className={styles.detailText}>带上换下来的旧牙套（如有）</Text>
+                </View>
+                <View className={styles.detailItem}>
+                  <Text className={styles.detailDot}>•</Text>
+                  <Text className={styles.detailText}>提前预约诊所，安排好陪同时间</Text>
+                </View>
+              </View>
+            </View>
+
+            {pendingReports > 0 && (
+              <View className={styles.detailSection}>
+                <Text className={styles.detailSectionTitle}>⚠️ 待处理问题</Text>
+                <View className={styles.detailList}>
+                  <View className={styles.detailItem}>
+                    <Text className={styles.detailDot}>•</Text>
+                    <Text className={styles.detailText}>
+                      有{pendingReports}个异常问题待诊所处理，复诊时可当面咨询
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            <View className={styles.modalActions}>
+              <Button className={styles.modalCancelBtn} onClick={() => setShowVisitDetail(false)}>
+                我知道了
+              </Button>
+            </View>
+          </View>
+        </View>
+      )}
     </ScrollView>
   );
 };
