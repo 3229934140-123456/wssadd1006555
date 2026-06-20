@@ -9,7 +9,9 @@ import type {
   ScheduleReminder,
   CurrentStatus,
   TreatmentProgress,
-  AbnormalType
+  AbnormalType,
+  PendingIssuesSummary,
+  PickupStatus
 } from '@/types';
 
 interface AppState {
@@ -26,16 +28,22 @@ interface AppState {
   unbind: () => void;
 
   addCheckIn: (checkIn: Omit<DailyCheckIn, 'id' | 'date'> & { issues?: AbnormalType[] }) => void;
+  updateCheckInNote: (checkInId: string, note: string) => void;
   hasCheckedToday: () => boolean;
   getTodayCheckIn: () => DailyCheckIn | undefined;
+  getCheckInById: (id: string) => DailyCheckIn | undefined;
 
   addReport: (report: Omit<AbnormalReport, 'id' | 'reportDate' | 'status'>) => void;
   updateReportStatus: (id: string, status: 'pending' | 'reviewed' | 'resolved') => void;
 
   confirmRecord: (recordId: string) => void;
+  getNextPickupStatus: () => PickupStatus;
   refreshCurrentStatus: () => void;
 
   generateReminders: () => void;
+  markReminderRead: (id: string) => void;
+  getFamilyReminders: () => ScheduleReminder[];
+  getPendingIssuesSummary: () => PendingIssuesSummary;
 }
 
 const storage = {
@@ -67,6 +75,12 @@ const getTodayStr = () => {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 };
+
+function addDays(dateStr: string, days: number): string {
+  const date = new Date(dateStr);
+  date.setDate(date.getDate() + days);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
 
 export const useAppStore = create<AppState>()(
   persist(
@@ -148,7 +162,7 @@ export const useAppStore = create<AppState>()(
         const mockCheckIns: DailyCheckIn[] = [
           { id: 'C001', date: '2024-06-19', alignerNumber: 12, wornHours: 22, isChecked: true, hasIssue: false },
           { id: 'C002', date: '2024-06-18', alignerNumber: 12, wornHours: 21, isChecked: true, hasIssue: false },
-          { id: 'C003', date: '2024-06-17', alignerNumber: 12, wornHours: 22, isChecked: true, hasIssue: true },
+          { id: 'C003', date: '2024-06-17', alignerNumber: 12, wornHours: 22, isChecked: true, hasIssue: true, issues: ['pain'], note: '左边后牙有点压痛' },
           { id: 'C004', date: '2024-06-16', alignerNumber: 11, wornHours: 23, isChecked: true, hasIssue: false },
           { id: 'C005', date: '2024-06-15', alignerNumber: 11, wornHours: 22, isChecked: true, hasIssue: false },
           { id: 'C006', date: '2024-06-14', alignerNumber: 11, wornHours: 22, isChecked: true, hasIssue: false },
@@ -206,13 +220,23 @@ export const useAppStore = create<AppState>()(
           alignerNumber: checkIn.alignerNumber,
           wornHours: checkIn.wornHours,
           isChecked: true,
-          hasIssue: (checkIn.issues && checkIn.issues.length > 0) || false
+          hasIssue: (checkIn.issues && checkIn.issues.length > 0) || false,
+          issues: checkIn.issues
         };
 
         set(state => ({
           checkIns: [newCheckIn, ...state.checkIns]
         }));
         console.log('[Store] 新增打卡记录:', newCheckIn);
+      },
+
+      updateCheckInNote: (checkInId, note) => {
+        set(state => ({
+          checkIns: state.checkIns.map(c =>
+            c.id === checkInId ? { ...c, note } : c
+          )
+        }));
+        console.log('[Store] 更新打卡备注:', checkInId, note);
       },
 
       hasCheckedToday: () => {
@@ -223,6 +247,10 @@ export const useAppStore = create<AppState>()(
       getTodayCheckIn: () => {
         const today = getTodayStr();
         return get().checkIns.find(c => c.date === today);
+      },
+
+      getCheckInById: (id) => {
+        return get().checkIns.find(c => c.id === id);
       },
 
       addReport: (report) => {
@@ -269,8 +297,8 @@ export const useAppStore = create<AppState>()(
             currentAligner: newCurrentAligner,
             daysInThisAligner: 0,
             changeDate: addDays(getTodayStr(), 14),
-            nextPickupDate: nextRecord ? nextRecord.receiveDate : state.currentStatus.nextPickupDate,
-            nextPickupAligners: nextRecord ? `第${nextRecord.startAligner}-${nextRecord.endAligner}副` : '已完成全部'
+            nextPickupDate: nextRecord ? nextRecord.receiveDate : '',
+            nextPickupAligners: nextRecord ? `第${nextRecord.startAligner}-${nextRecord.endAligner}副` : ''
           };
 
           const newProgress: TreatmentProgress = {
@@ -290,12 +318,31 @@ export const useAppStore = create<AppState>()(
         get().generateReminders();
       },
 
+      getNextPickupStatus: () => {
+        const { records, currentStatus } = get();
+        if (!currentStatus) return 'none';
+
+        const unconfirmed = records.filter(r => !r.confirmed).sort((a, b) => a.startAligner - b.startAligner);
+        if (unconfirmed.length === 0) return 'none';
+
+        const nextRecord = unconfirmed[0];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const pickupDate = new Date(nextRecord.receiveDate);
+        pickupDate.setHours(0, 0, 0, 0);
+
+        if (pickupDate.getTime() <= today.getTime()) {
+          return 'available';
+        }
+        return 'pending';
+      },
+
       refreshCurrentStatus: () => {
         get().generateReminders();
       },
 
       generateReminders: () => {
-        const { currentStatus, records, patientCase, progress } = get();
+        const { currentStatus, records, patientCase } = get();
         if (!currentStatus || !patientCase) return;
 
         const today = new Date();
@@ -406,6 +453,33 @@ export const useAppStore = create<AppState>()(
           }));
           console.log('[Store] 生成新提醒:', uniqueNewReminders);
         }
+      },
+
+      markReminderRead: (id) => {
+        set(state => ({
+          reminders: state.reminders.map(r => r.id === id ? { ...r, isRead: true } : r)
+        }));
+      },
+
+      getFamilyReminders: () => {
+        return get().reminders.filter(r => r.title.includes('家长提醒') || r.type === 'overdue');
+      },
+
+      getPendingIssuesSummary: () => {
+        const { reports, records, checkIns } = get();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const pendingReports = reports.filter(r => r.status === 'pending').length;
+        const overduePickups = records.filter(r => {
+          if (r.confirmed) return false;
+          const pickupDate = new Date(r.receiveDate);
+          pickupDate.setHours(0, 0, 0, 0);
+          return pickupDate.getTime() < today.getTime();
+        }).length;
+        const checkInIssues = checkIns.filter(c => c.hasIssue && c.date === getTodayStr()).length;
+
+        return { pendingReports, overduePickups, checkInIssues };
       }
     }),
     {
@@ -424,9 +498,3 @@ export const useAppStore = create<AppState>()(
     }
   )
 );
-
-function addDays(dateStr: string, days: number): string {
-  const date = new Date(dateStr);
-  date.setDate(date.getDate() + days);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-}

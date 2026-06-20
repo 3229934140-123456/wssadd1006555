@@ -29,6 +29,17 @@ export interface DailyCheckIn {
   isChecked: boolean;
   hasIssue: boolean;
   issues?: AbnormalType[];
+  note?: string;
+}
+
+// 领取批次状态
+export type PickupStatus = 'available' | 'pending' | 'completed' | 'none';
+
+// 待处理异常概览
+export interface PendingIssuesSummary {
+  pendingReports: number;
+  overduePickups: number;
+  checkInIssues: number;
 }
 
 // 异常上报

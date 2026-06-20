@@ -1,0 +1,326 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #EEF2FF 0%, #F5F7FA 30%);
+  padding: $spacing-lg $page-padding 120rpx;
+}
+
+.header {
+  margin-bottom: $spacing-lg;
+}
+
+.headerInfo {
+  flex: 1;
+}
+
+.title {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.subtitle {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.summaryCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.summaryTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-md;
+}
+
+.summaryItem {
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  text-align: center;
+}
+
+.summaryValue {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.summaryLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.todoCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.todoTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.todoList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.todoItem {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+}
+
+.todoDot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: $radius-round;
+  margin-top: 12rpx;
+  flex-shrink: 0;
+}
+
+.todoContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.todoText {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.todoDate {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.todoAction {
+  @include button-reset;
+  padding: 12rpx 24rpx;
+  background: linear-gradient(135deg, #6366F1 0%, #818CF8 100%);
+  color: $color-text-white;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  border-radius: $radius-round;
+  flex-shrink: 0;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.section {
+  margin-bottom: $spacing-md;
+}
+
+.sectionTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.tabBar {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+  overflow-x: auto;
+}
+
+.tabItem {
+  @include button-reset;
+  padding: $spacing-sm $spacing-md;
+  background: $color-bg-card;
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+  border-radius: $radius-round;
+  white-space: nowrap;
+  transition: all $transition-base;
+
+  &.active {
+    background: linear-gradient(135deg, #6366F1 0%, #818CF8 100%);
+    color: $color-text-white;
+    font-weight: $font-weight-medium;
+  }
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.emptyState {
+  text-align: center;
+  padding: $spacing-xl * 2 0;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+}
+
+.emptyIcon {
+  font-size: 80rpx;
+  display: block;
+  margin-bottom: $spacing-md;
+}
+
+.emptyTitle {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.emptyText {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.reminderList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.reminderCard {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  position: relative;
+  transition: all $transition-base;
+
+  &.read {
+    opacity: 0.7;
+  }
+
+  &:active {
+    transform: scale(0.99);
+  }
+}
+
+.reminderIcon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: $radius-md;
+  background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  flex-shrink: 0;
+}
+
+.reminderContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.reminderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-xs;
+}
+
+.reminderType {
+  font-size: $font-size-xs;
+  color: #6366F1;
+  font-weight: $font-weight-medium;
+  padding: 4rpx 16rpx;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: $radius-round;
+}
+
+.reminderDate {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.reminderTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.reminderDesc {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: 1.6;
+}
+
+.unreadDot {
+  position: absolute;
+  top: $spacing-md;
+  right: $spacing-md;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: $radius-round;
+  background: #FF4D4F;
+}
+
+.tipCard {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+}
+
+.tipIcon {
+  font-size: 36rpx;
+  flex-shrink: 0;
+}
+
+.tipContent {
+  flex: 1;
+}
+
+.tipTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: #92400E;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.tipText {
+  font-size: $font-size-sm;
+  color: #B45309;
+  line-height: 1.6;
+}

@@ -37,11 +37,22 @@ export const getAbnormalLabel = (type: AbnormalType): string => {
 
 export const getStatusLabel = (status: string): string => {
   const map: Record<string, string> = {
-    pending: '处理中',
+    pending: '待处理',
     reviewed: '已查看',
     resolved: '已解决'
   };
   return map[status] || status;
+};
+
+export const getIssueIcon = (type: string): string => {
+  const map: Record<string, string> = {
+    lost: '🎒',
+    pain: '😣',
+    bracket: '🔩',
+    broken: '💔',
+    other: '❓'
+  };
+  return map[type] || '⚠️';
 };
 
 export const getStatusColor = (status: string): string => {

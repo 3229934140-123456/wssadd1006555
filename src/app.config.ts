@@ -3,7 +3,10 @@ export default defineAppConfig({
     'pages/bind/index',
     'pages/home/index',
     'pages/report/index',
-    'pages/records/index'
+    'pages/records/index',
+    'pages/checkin-detail/index',
+    'pages/service/index',
+    'pages/family-reminders/index'
   ],
   window: {
     backgroundTextStyle: 'light',

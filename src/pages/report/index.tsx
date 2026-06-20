@@ -19,7 +19,6 @@ const ReportPage: React.FC = () => {
   const [description, setDescription] = useState('');
   const [contactName, setContactName] = useState(patientCase?.isTeenager ? '妈妈' : '');
   const [contactPhone, setContactPhone] = useState('');
-  const [showStaffView, setShowStaffView] = useState(false);
 
   const handleSelectType = useCallback((type: AbnormalType) => {
     setSelectedType(type);
@@ -115,12 +114,14 @@ const ReportPage: React.FC = () => {
       </View>
 
       {pendingCount > 0 && (
-        <View className={styles.pendingNotice} onClick={() => setShowStaffView(!showStaffView)}>
+        <View className={styles.pendingNotice} onClick={() => {
+          Taro.navigateTo({ url: '/pages/service/index' });
+        }}>
           <Text style={{ fontSize: '28rpx', color: '#fff' }}>
             🔔 有 {pendingCount} 条待客服处理
           </Text>
           <Text style={{ fontSize: '24rpx', color: 'rgba(255,255,255,0.8)' }}>
-            （点击模拟客服查看）
+            （点击进入客服视图）
           </Text>
         </View>
       )}
@@ -204,7 +205,6 @@ const ReportPage: React.FC = () => {
               <View
                 key={report.id}
                 className={styles.historyItem}
-                onClick={() => showStaffView && handleUpdateStatus(report)}
               >
                 <View className={styles.historyHeader}>
                   <Text className={styles.historyType}>{getAbnormalLabel(report.type)}</Text>
@@ -222,42 +222,22 @@ const ReportPage: React.FC = () => {
                 <Text className={styles.historyDate}>
                   {formatDate(report.reportDate)}
                   {report.contactName ? ` · ${report.contactName}` : ''}
-                  {showStaffView && report.contactPhone ? ` · ${report.contactPhone}` : ''}
                 </Text>
-                {showStaffView && (
-                  <View style={{ marginTop: '16rpx', paddingTop: '16rpx', borderTop: '1rpx solid #f0f0f0' }}>
-                    <Text style={{ fontSize: '24rpx', color: '#4CAF90' }}>
-                      👆 点击可更新处理状态
-                    </Text>
-                  </View>
-                )}
               </View>
             ))}
           </View>
         )}
-      </View>
-
-      {showStaffView && (
-        <View style={{ position: 'fixed', bottom: '32rpx', right: '32rpx', zIndex: 100 }}>
+        {reports.length > 0 && (
           <Button
-            style={{
-              width: '120rpx',
-              height: '120rpx',
-              borderRadius: '60rpx',
-              background: '#4CAF90',
-              color: '#fff',
-              fontSize: '24rpx',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4rpx 16rpx rgba(76,175,144,0.4)'
+            className={styles.staffViewBtn}
+            onClick={() => {
+              Taro.navigateTo({ url: '/pages/service/index' });
             }}
-            onClick={() => setShowStaffView(false)}
           >
-            退出客服视图
+            🏥 进入诊所客服视图
           </Button>
-        </View>
-      )}
+        )}
+      </View>
     </ScrollView>
   );
 };
