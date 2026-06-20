@@ -1,0 +1,193 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, $color-tag-bg 0%, $color-bg-page 40%);
+  padding: $spacing-lg $page-padding 120rpx;
+}
+
+.section {
+  margin-bottom: $spacing-lg;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.reminderList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.reminderItem {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card;
+  border-left: 6rpx solid $color-primary;
+
+  &.highPriority {
+    border-left-color: $color-error;
+  }
+
+  &.mediumPriority {
+    border-left-color: $color-warning;
+  }
+}
+
+.reminderDot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: $radius-round;
+  background: $color-primary;
+  margin-top: 12rpx;
+  flex-shrink: 0;
+
+  .highPriority & {
+    background: $color-error;
+  }
+
+  .mediumPriority & {
+    background: $color-warning;
+  }
+}
+
+.reminderContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.reminderTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+}
+
+.reminderText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: 1.5;
+}
+
+.reminderDate {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-top: $spacing-xs;
+}
+
+.checkInCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-xl;
+  box-shadow: $shadow-card;
+  text-align: center;
+}
+
+.checkInTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.checkInSubtitle {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-xl;
+}
+
+.checkInBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-lg;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-button;
+  color: $color-text-white;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-base;
+
+  &.checked {
+    background: $color-border;
+    color: $color-text-tertiary;
+  }
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.quickActions {
+  display: flex;
+  gap: $spacing-md;
+  margin-top: $spacing-lg;
+}
+
+.quickBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-md;
+  background: $color-tag-bg;
+  border-radius: $radius-button;
+  color: $color-primary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.photoNotice {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  background: linear-gradient(135deg, #FFF3E6 0%, #FFE8CC 100%);
+  border-radius: $radius-md;
+  margin-bottom: $spacing-lg;
+}
+
+.photoIcon {
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+}
+
+.photoText {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: #8B4513;
+  line-height: 1.5;
+}
+
+.familyNotice {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  background: $color-tag-bg;
+  border-radius: $radius-md;
+  margin-top: $spacing-md;
+}
+
+.familyText {
+  flex: 1;
+  font-size: $font-size-xs;
+  color: $color-primary-dark;
+  line-height: 1.5;
+}

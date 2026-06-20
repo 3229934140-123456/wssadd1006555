@@ -1,0 +1,201 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding: $spacing-lg $page-padding 120rpx;
+}
+
+.summaryCard {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-xl;
+  color: $color-text-white;
+  margin-bottom: $spacing-lg;
+  box-shadow: 0 4rpx 20rpx rgba(76, 175, 144, 0.3);
+}
+
+.summaryTitle {
+  font-size: $font-size-md;
+  opacity: 0.9;
+  margin-bottom: $spacing-md;
+}
+
+.summaryStats {
+  display: flex;
+  justify-content: space-around;
+}
+
+.statItem {
+  text-align: center;
+}
+
+.statValue {
+  font-size: 48rpx;
+  font-weight: $font-weight-bold;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: $font-size-xs;
+  opacity: 0.85;
+  margin-top: $spacing-xs;
+}
+
+.filterTabs {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+}
+
+.tabItem {
+  @include button-reset;
+  padding: 0 $spacing-lg;
+  height: $button-height-sm;
+  background: $color-bg-card;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  transition: all $transition-base;
+
+  &.active {
+    background: $color-primary;
+    color: $color-text-white;
+  }
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.nextPickupCard {
+  background: linear-gradient(135deg, #FFF3E6 0%, #FFE8CC 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+}
+
+.nextPickupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.nextPickupTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: #8B4513;
+}
+
+.nextPickupDate {
+  font-size: $font-size-sm;
+  color: #A0522D;
+  background: rgba(255, 255, 255, 0.6);
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-round;
+}
+
+.nextPickupContent {
+  font-size: $font-size-sm;
+  color: #A0522D;
+  line-height: 1.6;
+}
+
+.nextPickupBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-md;
+  background: #FF9F43;
+  border-radius: $radius-button;
+  color: $color-text-white;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  margin-top: $spacing-md;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.emptyState {
+  text-align: center;
+  padding: $spacing-xl * 2 0;
+}
+
+.emptyText {
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+}
+
+.dailySection {
+  margin-bottom: $spacing-lg;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.weekStats {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+}
+
+.dayItem {
+  flex: 1;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-md $spacing-xs;
+  text-align: center;
+  box-shadow: $shadow-card;
+}
+
+.dayName {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-bottom: $spacing-xs;
+}
+
+.dayStatus {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: $radius-round;
+  margin: 0 auto $spacing-xs;
+  background: $color-border;
+
+  &.checked {
+    background: $color-success;
+  }
+
+  &.hasIssue {
+    background: $color-warning;
+  }
+}
+
+.dayAligner {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.tipCard {
+  background: $color-tag-bg;
+  border-radius: $radius-md;
+  padding: $spacing-md $spacing-lg;
+  margin-top: $spacing-lg;
+}
+
+.tipText {
+  font-size: $font-size-sm;
+  color: $color-primary-dark;
+  line-height: 1.6;
+}
